@@ -16,6 +16,7 @@ import {
 	from "@azure/communication-call-automation";
 import { v4 as uuidv4 } from 'uuid';
 import WebSocket from 'ws';
+import rateLimit from 'express-rate-limit'; // Import rate limiting middleware
 config();
 
 const PORT = process.env.PORT;
@@ -232,8 +233,16 @@ app.post('/api/recordingFileStatus', async (req, res) => {
 		res.sendStatus(200);
 	}
 });
+
+// Rate limiter middleware for the /download endpoint
+const downloadLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 10, // Limit each IP to 10 requests per windowMs
+	message: "Too many download requests from this IP, please try again later."
+});
+
 // GET endpoint to download call audio
-app.get('/download', async (req, res) => {
+app.get('/download', downloadLimiter, async (req, res) => {
 	if (recordingLocation === null || recordingLocation === undefined) {
 		console.log("Failed to download, recordingLocation is invalid.")
 		res.redirect('/')
