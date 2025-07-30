@@ -1,4 +1,3 @@
-
 require('dotenv').config({path: __dirname + '/.env' })
 const { CommunicationIdentityClient } = require('@azure/communication-identity');    
 const { PublicClientApplication, CryptoProvider } = require('@azure/msal-node');
@@ -79,8 +78,8 @@ app.get('/redirect', async (req, res) => {
         
         res.sendStatus(200);
     }).catch((error) => {
-        console.log(error);
-        res.status(500).send(error);
+        console.error("Error during token acquisition:", error); // Log detailed error on the server
+        res.status(500).send("An error occurred while processing your request."); // Send a generic error message to the client
     });
 });
 
