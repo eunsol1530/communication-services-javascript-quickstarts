@@ -1,6 +1,7 @@
 import { config } from 'dotenv';
 import express, { Application } from 'express';
 import http from 'http';
+import https from 'https'; // Import https module
 import { PhoneNumberIdentifier, createIdentifierFromRawId } from "@azure/communication-common";
 import {
 	CallAutomationClient, CallConnection, AnswerCallOptions, CallMedia,
@@ -21,9 +22,10 @@ config();
 const PORT = process.env.PORT;
 const app: Application = express();
 app.use(express.json());
+app.disable('x-powered-by'); // Disable X-Powered-By header
 
 // Create common server for app and websocket
-const server = http.createServer(app);
+const server = https.createServer(app); // Use https.createServer
 
 let callConnectionId: string;
 let callConnection: CallConnection;
@@ -71,6 +73,9 @@ async function createAcsClient() {
 }
 
 app.post("/api/incomingCall", async (req: any, res: any) => {
+	if (!Array.isArray(req.body) || typeof req.body[0] !== 'object') {
+		return res.status(400).send('Invalid request body');
+	}
 	const event = req.body[0];
 	const eventData = event.data;
 	if (event.eventType === "Microsoft.EventGrid.SubscriptionValidationEvent") {
@@ -100,6 +105,9 @@ app.post("/api/incomingCall", async (req: any, res: any) => {
 });
 
 app.post('/api/callbacks/:contextId', async (req: any, res: any) => {
+	if (!Array.isArray(req.body) || typeof req.body[0] !== 'object') {
+		return res.status(400).send('Invalid request body');
+	}
 	const contextId = req.params.contextId;
 	const event = req.body[0];
 	const eventData = event.data;
@@ -219,6 +227,9 @@ app.get('/', (req, res) => {
 
 // POST endpoint to receive recording events
 app.post('/api/recordingFileStatus', async (req, res) => {
+	if (!Array.isArray(req.body) || typeof req.body[0] !== 'object') {
+		return res.status(400).send('Invalid request body');
+	}
 	const event = req.body[0];
 	const eventData = event.data;
 	console.log("Received transcription event=%s", event.eventType)
